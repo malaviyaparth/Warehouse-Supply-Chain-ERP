@@ -1,0 +1,27 @@
+{
+  "name": "warehouse-supply-chain-erp",
+  "version": "1.0.0",
+  "description": "**Warehouse and Supply Chain Management System**",
+  "keywords": [],
+  "homepage": "https://github.com/malaviyaparth/Warehouse-Supply-Chain-ERP#readme",
+  "bugs": {
+    "url": "https://github.com/malaviyaparth/Warehouse-Supply-Chain-ERP/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/malaviyaparth/Warehouse-Supply-Chain-ERP.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.2",
+    "nodemon": "^3.1.14"
+  }
+}
