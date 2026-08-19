@@ -1,17 +1,24 @@
 const mongoose = require("mongoose");
 
-const categorySchema = new mongoose.Schema(
+const warehouseSchema = new mongoose.Schema(
     {
-        categoryName: {
+        warehouseName: {
             type: String,
             required: true,
             unique: true,
             trim: true
         },
 
-        description: {
+        location: {
             type: String,
+            required: true,
             trim: true
+        },
+
+        capacity: {
+            type: Number,
+            required: true,
+            min: 0
         },
 
         status: {
@@ -25,4 +32,4 @@ const categorySchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model("Category", categorySchema);
+module.exports = mongoose.model("Warehouse", warehouseSchema);

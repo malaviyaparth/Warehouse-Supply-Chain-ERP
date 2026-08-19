@@ -1,15 +1,26 @@
 const mongoose = require("mongoose");
 
-const categorySchema = new mongoose.Schema(
+const customerSchema = new mongoose.Schema(
     {
-        categoryName: {
+        customerName: {
             type: String,
             required: true,
-            unique: true,
             trim: true
         },
 
-        description: {
+        email: {
+            type: String,
+            lowercase: true,
+            trim: true
+        },
+
+        phone: {
+            type: String,
+            required: true,
+            trim: true
+        },
+
+        address: {
             type: String,
             trim: true
         },
@@ -25,4 +36,4 @@ const categorySchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model("Category", categorySchema);
+module.exports = mongoose.model("Customer", customerSchema);

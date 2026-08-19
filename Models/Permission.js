@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
-const categorySchema = new mongoose.Schema(
+const permissionSchema = new mongoose.Schema(
     {
-        categoryName: {
+        permissionName: {
             type: String,
             required: true,
             unique: true,
@@ -14,10 +14,10 @@ const categorySchema = new mongoose.Schema(
             trim: true
         },
 
-        status: {
-            type: String,
-            enum: ["ACTIVE", "INACTIVE"],
-            default: "ACTIVE"
+        role: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Role",
+            required: true
         }
     },
     {
@@ -25,4 +25,4 @@ const categorySchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model("Category", categorySchema);
+module.exports = mongoose.model("Permission", permissionSchema);
