@@ -1,69 +1,60 @@
 const mongoose = require("mongoose");
 
-const purchaseRequestSchema = new mongoose.Schema(
+const productSchema = new mongoose.Schema(
     {
-        vendor: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Vendor",
-            required: true
-        },
-
-        requestedBy: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Employee",
-            required: true
-        },
-
-        requestDate: {
-            type: Date,
-            default: Date.now
-        },
-
-        items: [
-            {
-                product: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "Product",
-                    required: true
-                },
-
-                quantity: {
-                    type: Number,
-                    required: true,
-                    min: 1
-                },
-
-                estimatedPrice: {
-                    type: Number,
-                    min: 0
-                }
-            }
-        ],
-
-        reason: {
+        productName: {
             type: String,
+            required: true,
             trim: true
         },
 
-        status: {
-            type: String,
-            enum: [
-                "PENDING",
-                "APPROVED",
-                "REJECTED",
-                "CONVERTED_TO_ORDER",
-                "CANCELLED"
-            ],
-            default: "PENDING"
-        },
-
-        approvedBy: {
+        category: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Employee"
+            ref: "Category",
+            required: true
         },
 
-        approvedAt: {
-            type: Date
+        brand: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Brand",
+            required: true
+        },
+
+        sku: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true
+        },
+
+        barcode: {
+            type: String,
+            unique: true,
+            sparse: true
+        },
+
+        unitPrice: {
+            type: Number,
+            required: true,
+            min: 0
+        },
+
+        averageDailyDemand: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+
+        leadTimeDays: {
+            type: Number,
+            default: 7,
+            min: 0
+        },
+
+        safetyStock: {
+            type: Number,
+            default: 0,
+            min: 0
         }
     },
     {
@@ -72,6 +63,6 @@ const purchaseRequestSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model(
-    "PurchaseRequest",
-    purchaseRequestSchema
+    "Product",
+    productSchema
 );

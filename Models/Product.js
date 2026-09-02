@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema(
     {
+        productName: {
+            type: String,
+            required: true,
+            trim: true
+        },
+
         category: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Category",
@@ -10,28 +16,21 @@ const productSchema = new mongoose.Schema(
 
         brand: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Brand"
-        },
-
-        productName: {
-            type: String,
-            required: true,
-            trim: true
+            ref: "Brand",
+            required: true
         },
 
         sku: {
             type: String,
             required: true,
             unique: true,
-            uppercase: true,
             trim: true
         },
 
         barcode: {
             type: String,
             unique: true,
-            sparse: true,
-            trim: true
+            sparse: true
         },
 
         unitPrice: {
@@ -40,16 +39,22 @@ const productSchema = new mongoose.Schema(
             min: 0
         },
 
-        unit: {
-            type: String,
-            enum: ["PCS", "KG", "GRAM", "LITER", "METER", "BOX", "PACK"],
-            default: "PCS"
+        averageDailyDemand: {
+            type: Number,
+            default: 0,
+            min: 0
         },
 
-        status: {
-            type: String,
-            enum: ["ACTIVE", "INACTIVE"],
-            default: "ACTIVE"
+        leadTimeDays: {
+            type: Number,
+            default: 7,
+            min: 0
+        },
+
+        safetyStock: {
+            type: Number,
+            default: 0,
+            min: 0
         }
     },
     {
@@ -57,4 +62,7 @@ const productSchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model("Product", productSchema);
+module.exports = mongoose.model(
+    "Product",
+    productSchema
+);
