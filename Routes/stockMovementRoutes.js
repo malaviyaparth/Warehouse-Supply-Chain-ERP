@@ -1,17 +1,5 @@
-const express = require("express");
-
-const {
-  getStockMovements,
-  getProductMovements
-} = require("../controllers/stockMovementController");
-
-const router = express.Router();
-
-router.get("/", getStockMovements);
-
-router.get(
-  "/product/:productId",
-  getProductMovements
-);
-
+const router = require("express").Router();
+const c = require("../Controllers/stockMovementController");
+router.get("/", c.list);
+router.get("/product/:productId", c.byProduct);
 module.exports = router;

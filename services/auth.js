@@ -1,20 +1,12 @@
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
-const jwt = require("jsonwebtoken")
+const hashPassword = (password) => bcrypt.hash(password, 12);
+const comparePassword = (password, hash) => bcrypt.compare(password, hash);
+const setUser = (payload) =>
+  jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "1d",
+  });
+const getUser = (token) => jwt.verify(token, process.env.JWT_SECRET);
 
-const secret = "jeel@123";
-
-function setUser(user){
-
-  return jwt.sign(user ,secret);
-}
-
-
-function getUser(id){
-
-  return jwt.verify(token , secret);
-}
-
-module.exports = {
-  setUser,
-  getUser,
-};
+module.exports = { hashPassword, comparePassword, setUser, getUser };

@@ -1,226 +1,71 @@
-//  product -> product varient , category , brand , roles , warehouse
-app.use(express.json());
-
+require("dotenv").config();
 const express = require("express");
-const dotenv = require("dotenv");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const connectDB = require("./Config/db");
-const Brand = require("./Models/Brand");
-const Category = require("./Models/Category");
-const Product = require("./Models/Product");
-const Vendor = require("./Models/Vendor");
-const categoryRoutes = require( "./Routes/CategoryRoutes");
-const productRoutes = require("./Routes/productRoutes");
-const productVariantRoutes = require("./Routes/productVariantRoutes");
-const warehouseRoutes = require("./Routes/warehouseRoutes");
-const stockMovementRoutes = require("./Routes/stockMovementRoutes");
-const purchaseRoutes = require("./Routes/purchaseRoutes");
-
-
-
-
-
-// Load environment variables
-dotenv.config();
-
+const errorHandler = require("./Middleware/errorMiddleware");
+const authenticate = require("./Middleware/authMiddleware");
 const app = express();
 
-app.use(express.json());
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
+  : true;
+app.use(cors({ origin: corsOrigins, credentials: true }));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-connectDB();
-
-
-
-app.use(
-    "/api/purchases",
-    purchaseRoutes
-);
-app.use( "/api/stock-movements", stockMovementRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/product-variants", productVariantRoutes);
-app.use("/api/warehouses", warehouseRoutes);
-
-
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
-
-
-
-/*
-
-const express = require("express");
-
-const app = express();
-
-
-// Middleware
-app.use(express.json());
-
-
-// Existing routes
-
-const employeeRoutes =
-    require("./routes/employeeRoutes");
-
-const roleRoutes =
-    require("./routes/roleRoutes");
-
-const permissionRoutes =
-    require("./routes/permissionRoutes");
-
-const categoryRoutes =
-    require("./routes/categoryRoutes");
-
-const brandRoutes =
-    require("./routes/brandRoutes");
-
-const productRoutes =
-    require("./routes/productRoutes");
-
-const productVariantRoutes =
-    require("./routes/productVariantRoutes");
-
-const warehouseRoutes =
-    require("./routes/warehouseRoutes");
-
-const inventoryRoutes =
-    require("./routes/inventoryRoutes");
-
-const stockMovementRoutes =
-    require("./routes/stockMovementRoutes");
-
-const vendorRoutes =
-    require("./routes/vendorRoutes");
-
-const purchaseRoutes =
-    require("./routes/purchaseRoutes");
-
-
-// Phase 10
-const reorderPointRoutes =
-    require("./routes/reorderPointRoutes");
-
-const purchaseRequestRoutes =
-    require("./routes/purchaseRequestRoutes");
-
-
-// Phase 11
-const salesOrderRoutes =
-    require("./routes/salesOrderRoutes");
-
-
-// Phase 12
-const reservationRoutes =
-    require("./routes/reservationRoutes");
-
-
-// Phase 13
-const dashboardRoutes =
-    require("./routes/dashboardRoutes");
-
-
-// Routes
-
-app.use(
-    "/api/employees",
-    employeeRoutes
+app.get("/health", (req, res) =>
+  res.json({
+    success: true,
+    status: "ok",
+    service: "inventory-management-api",
+    timestamp: new Date().toISOString(),
+  }),
 );
 
-app.use(
-    "/api/roles",
-    roleRoutes
+app.use("/api/auth", require("./Routes/authRoutes"));
+app.use("/api", authenticate);
+
+const routes = {
+  "/api/employees": require("./Routes/employeeRoutes"),
+  "/api/roles": require("./Routes/roleRoutes"),
+  "/api/categories": require("./Routes/categoryRoutes"),
+  "/api/brands": require("./Routes/brandRoutes"),
+  "/api/products": require("./Routes/productRoutes"),
+  "/api/product-variants": require("./Routes/productVariantRoutes"),
+  "/api/warehouses": require("./Routes/warehouseRoutes"),
+  "/api/inventory": require("./Routes/inventoryRoutes"),
+  "/api/stock-movements": require("./Routes/stockMovementRoutes"),
+  "/api/vendors": require("./Routes/vendorRoutes"),
+  "/api/customers": require("./Routes/customerRoutes"),
+  "/api/purchases": require("./Routes/purchaseRoutes"),
+  "/api/purchase-requests": require("./Routes/purchaseRequestRoutes"),
+  "/api/reorder-point": require("./Routes/reoderPointRoutes"),
+  "/api/sales-orders": require("./Routes/salesOrderRoutes"),
+  "/api/stock-transfers": require("./Routes/stockTransferRoutes"),
+  "/api/invoices": require("./Routes/invoiceRoutes"),
+  "/api/reports": require("./Routes/reportRoutes"),
+  "/api/dashboard": require("./Routes/dashboardRoutes"),
+};
+Object.entries(routes).forEach(([path, router]) => app.use(path, router));
+
+app.use((req, res) =>
+  res.status(404).json({ success: false, message: "Route not found" }),
 );
+app.use(errorHandler);
 
-app.use(
-    "/api/permissions",
-    permissionRoutes
-);
-
-app.use(
-    "/api/categories",
-    categoryRoutes
-);
-
-app.use(
-    "/api/brands",
-    brandRoutes
-);
-
-app.use(
-    "/api/products",
-    productRoutes
-);
-
-app.use(
-    "/api/product-variants",
-    productVariantRoutes
-);
-
-app.use(
-    "/api/warehouses",
-    warehouseRoutes
-);
-
-app.use(
-    "/api/inventory",
-    inventoryRoutes
-);
-
-app.use(
-    "/api/stock-movements",
-    stockMovementRoutes
-);
-
-app.use(
-    "/api/vendors",
-    vendorRoutes
-);
-
-app.use(
-    "/api/purchases",
-    purchaseRoutes
-);
-
-
-// Phase 10
-
-app.use(
-    "/api/reorder-point",
-    reorderPointRoutes
-);
-
-app.use(
-    "/api/purchase-requests",
-    purchaseRequestRoutes
-);
-
-
-// Phase 11
-
-app.use(
-    "/api/sales-orders",
-    salesOrderRoutes
-);
-
-
-// Phase 12
-
-app.use(
-    "/api/reservations",
-    reservationRoutes
-);
-
-
-// Phase 13
-
-app.use(
-    "/api/dashboard",
-    dashboardRoutes
-);
-
-*/
+const PORT = Number(process.env.PORT) || 3000;
+const start = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () =>
+      console.log(`API running on http://localhost:${PORT}`),
+    );
+  } catch (e) {
+    console.error("Startup failed:", e.message);
+    process.exit(1);
+  }
+};
+if (require.main === module) start();
+module.exports = { app, start };

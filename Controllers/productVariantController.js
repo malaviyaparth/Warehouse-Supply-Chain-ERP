@@ -1,67 +1,19 @@
-const variantService = require("../services/productVariant.service");
-
-const createVariant = async (req, res, next) => {
-  try {
-    res.status(201).json({
-      success: true,
-      data: await variantService.createVariant(req.body),
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getVariants = async (req, res, next) => {
-  try {
-    res.json({
-      success: true,
-      data: await variantService.getVariants(req.params.productId),
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getVariantById = async (req, res, next) => {
-  try {
-    const variant = await variantService.getVariantById(req.params.id);
-
-    if (!variant) return res.status(404).json({ message: "Variant not found" });
-
-    res.json({ success: true, data: variant });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const updateVariant = async (req, res, next) => {
-  try {
-    const variant = await variantService.updateVariant(req.params.id, req.body);
-
-    if (!variant) return res.status(404).json({ message: "Variant not found" });
-
-    res.json({ success: true, data: variant });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const deleteVariant = async (req, res, next) => {
-  try {
-    const variant = await variantService.deleteVariant(req.params.id);
-
-    if (!variant) return res.status(404).json({ message: "Variant not found" });
-
-    res.json({ success: true, message: "Variant deleted successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
-
+const ProductVariant = require("../Models/ProductVariant");
+const Product = require("../Models/Product");
+const { createCrudController } = require("../Utils/crudController");
+const base = createCrudController(ProductVariant, {
+  populate: [{ path: "product", select: "productName sku" }],
+});
 module.exports = {
-  createVariant,
-  getVariants,
-  getVariantById,
-  updateVariant,
-  deleteVariant,
+  ...base,
+  getByProduct: async (req, res, next) => {
+    try {
+      const docs = await ProductVariant.find({ product: req.params.productId })
+        .populate("product", "productName sku")
+        .sort({ createdAt: -1 });
+      res.json({ success: true, count: docs.length, data: docs });
+    } catch (e) {
+      next(e);
+    }
+  },
 };

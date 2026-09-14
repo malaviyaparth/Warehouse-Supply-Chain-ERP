@@ -5,13 +5,13 @@ const stockMovementSchema = new mongoose.Schema(
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true
+      required: true,
     },
 
     warehouse: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Warehouse",
-      required: true
+      required: true,
     },
 
     type: {
@@ -23,54 +23,44 @@ const stockMovementSchema = new mongoose.Schema(
         "TRANSFER_IN",
         "TRANSFER_OUT",
         "RETURN_IN",
-        "DAMAGED"
+        "DAMAGED",
       ],
-      required: true
+      required: true,
     },
 
     quantity: {
       type: Number,
-      required: true
+      required: true,
     },
 
     referenceType: {
       type: String,
-      enum: [
-        "PURCHASE",
-        "SALE",
-        "TRANSFER",
-        "RETURN",
-        "ADJUSTMENT",
-        "MANUAL"
-      ],
-      default: "MANUAL"
+      enum: ["PURCHASE", "SALE", "TRANSFER", "RETURN", "ADJUSTMENT", "MANUAL"],
+      default: "MANUAL",
     },
 
     referenceId: {
       type: mongoose.Schema.Types.ObjectId,
-      default: null
+      default: null,
     },
 
     previousQuantity: {
       type: Number,
-      required: true
+      required: true,
     },
 
     newQuantity: {
       type: Number,
-      required: true
+      required: true,
     },
 
     performedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
-      required: false
-    }
+      required: false,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-module.exports = mongoose.model(
-  "StockMovement",
-  stockMovementSchema
-);
+module.exports = mongoose.model("StockMovement", stockMovementSchema);

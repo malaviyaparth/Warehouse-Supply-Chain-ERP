@@ -1,52 +1,83 @@
-
-// controllers/userController.js
-
-const User = require("../models/User");
-
-const getRoles = async (req, res) => {
-    try {
-        const users = await User.find();
-
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({
-            message: "Failed to get users"
-        });
-    }
+const Role = require("../Models/Role");
+const Permission = require("../Models/Permission");
+const list = async (req, res, next) => {
+  try {
+    const d = await Role.find().populate("permissions");
+    res.json({ success: true, count: d.length, data: d });
+  } catch (e) {
+    next(e);
+  }
 };
-
-const getRolesById = async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found"
-            });
-        }
-
-        res.status(200).json(user);
-    } catch (error) {
-        res.status(500).json({
-            message: "Failed to get user"
-        });
-    }
+const get = async (req, res, next) => {
+  try {
+    const d = await Role.findById(req.params.id).populate("permissions");
+    if (!d)
+      return res
+        .status(404)
+        .json({ success: false, message: "Role not found" });
+    res.json({ success: true, data: d });
+  } catch (e) {
+    next(e);
+  }
 };
-
-const createRoles = async (req, res) => {
-    try {
-        const user = await User.create(req.body);
-
-        res.status(201).json(user);
-    } catch (error) {
-        res.status(500).json({
-            message: "Failed to create user"
-        });
-    }
+const create = async (req, res, next) => {
+  try {
+    const d = await Role.create(req.body);
+    res.status(201).json({ success: true, data: d });
+  } catch (e) {
+    next(e);
+  }
 };
-
+const update = async (req, res, next) => {
+  try {
+    const d = await Role.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    }).populate("permissions");
+    if (!d)
+      return res
+        .status(404)
+        .json({ success: false, message: "Role not found" });
+    res.json({ success: true, data: d });
+  } catch (e) {
+    next(e);
+  }
+};
+const remove = async (req, res, next) => {
+  try {
+    const d = await Role.findByIdAndDelete(req.params.id);
+    if (!d)
+      return res
+        .status(404)
+        .json({ success: false, message: "Role not found" });
+    res.json({ success: true, message: "Role deleted" });
+  } catch (e) {
+    next(e);
+  }
+};
+const permissions = async (req, res, next) => {
+  try {
+    const d = await Permission.find().populate("role", "roleName");
+    res.json({ success: true, count: d.length, data: d });
+  } catch (e) {
+    next(e);
+  }
+};
+const createPermission = async (req, res, next) => {
+  try {
+    const d = await Permission.create(req.body);
+    await Role.findByIdAndUpdate(d.role, { $addToSet: { permissions: d._id } });
+    res.status(201).json({ success: true, data: d });
+  } catch (e) {
+    next(e);
+  }
+};
 module.exports = {
-    getUsers,
-    getUserById,
-    createUser
+  list,
+  get,
+  create,
+  update,
+  remove,
+  permissions,
+  createPermission,
 };

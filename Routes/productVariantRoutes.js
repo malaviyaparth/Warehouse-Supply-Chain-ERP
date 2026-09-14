@@ -1,18 +1,9 @@
-const express = require("express");
-const router = express.Router();
-
-const {
-  createVariant,
-  getVariants,
-  getVariantById,
-  updateVariant,
-  deleteVariant,
-} = require("../Controllers/productVariantController");
-
-router.post("/", createVariant);
-router.get("/product/:productId", getVariants);
-router.get("/:id", getVariantById);
-router.put("/:id", updateVariant);
-router.delete("/:id", deleteVariant);
-
+const router = require("express").Router();
+const c = require("../Controllers/productVariantController");
+router.post("/", c.create);
+router.get("/", c.list);
+router.get("/product/:productId", c.getByProduct);
+router.get("/:id", c.get);
+router.put("/:id", c.update);
+router.delete("/:id", c.remove);
 module.exports = router;

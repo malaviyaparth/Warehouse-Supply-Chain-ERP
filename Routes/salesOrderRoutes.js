@@ -1,37 +1,10 @@
-const express = require("express");
-
-const {
-    createSalesOrder,
-    getSalesOrders,
-    getSalesOrderById,
-    cancelSalesOrder
-} = require("../Controllers/salesOrderController");
-
-const router = express.Router();
-
-
-router.post(
-    "/",
-    createSalesOrder
-);
-
-
-router.get(
-    "/",
-    getSalesOrders
-);
-
-
-router.get(
-    "/:id",
-    getSalesOrderById
-);
-
-
-router.put(
-    "/:id/cancel",
-    cancelSalesOrder
-);
-
-
+const router = require("express").Router();
+const c = require("../Controllers/salesOrderController");
+router.post("/", c.create);
+router.get("/", c.list);
+router.get("/:id", c.get);
+router.put("/:id/reserve", c.reserve);
+router.put("/:id/fulfill", c.fulfill);
+router.put("/:id/cancel", c.cancel);
+router.post("/:id/invoice", c.invoice);
 module.exports = router;

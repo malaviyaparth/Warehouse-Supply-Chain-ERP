@@ -1,16 +1,11 @@
-// routes/userRoutes.js
-
-const express = require("express");
-const router = express.Router();
-
-const {
-    getRoles,
-    getRolesById,
-    createRoles
-} = require("../controllers/userController");
-
-router.get("/", getRoles);
-router.get("/:id", getRolesById);
-router.post("/", createRoles);
-
+const router = require("express").Router();
+const c = require("../Controllers/roleController");
+const authorize = require("../Middleware/roleMiddleware");
+router.get("/permissions/all", c.permissions);
+router.post("/permissions", authorize("ADMIN"), c.createPermission);
+router.get("/", c.list);
+router.get("/:id", c.get);
+router.post("/", authorize("ADMIN"), c.create);
+router.put("/:id", authorize("ADMIN"), c.update);
+router.delete("/:id", authorize("ADMIN"), c.remove);
 module.exports = router;

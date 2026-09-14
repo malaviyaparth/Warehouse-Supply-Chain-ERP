@@ -1,40 +1,9 @@
-const express = require("express");
-
-const {
-    createPurchase,
-    getPurchases,
-    getPurchaseById,
-    cancelPurchase,
-    receivePurchase
-} = require("../Controllers/purchaseController");
-
-const router = express.Router();
-
-
-// CREATE PURCHASE ORDER
-router.post("/", createPurchase);
-
-
-// GET ALL PURCHASE ORDERS
-router.get("/", getPurchases);
-
-
-// GET PURCHASE BY ID
-router.get("/:id", getPurchaseById);
-
-
-// RECEIVE GOODS
-router.put(
-    "/:id/receive",
-    receivePurchase
-);
-
-
-// CANCEL PURCHASE
-router.put(
-    "/:id/cancel",
-    cancelPurchase
-);
-
-
+const router = require("express").Router();
+const c = require("../Controllers/purchaseController");
+router.post("/", c.create);
+router.get("/", c.list);
+router.get("/:id", c.get);
+router.put("/:id/approve", c.approve);
+router.put("/:id/receive", c.receive);
+router.put("/:id/cancel", c.cancel);
 module.exports = router;

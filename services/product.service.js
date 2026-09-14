@@ -130,7 +130,8 @@ const updateProduct = async (id, data = {}) => {
     updates.brand = data.brand || null;
   }
 
-  if (data.productName !== undefined) updates.productName = data.productName.trim();
+  if (data.productName !== undefined)
+    updates.productName = data.productName.trim();
   if (data.sku !== undefined) updates.sku = data.sku.trim().toUpperCase();
   if (data.barcode !== undefined) updates.barcode = data.barcode.trim();
   if (data.unitPrice !== undefined) updates.unitPrice = Number(data.unitPrice);
@@ -157,5 +158,3 @@ module.exports = {
   updateProduct,
   deleteProduct,
 };
-
-

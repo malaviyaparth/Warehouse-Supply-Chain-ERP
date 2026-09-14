@@ -1,38 +1,29 @@
 const StockMovement = require("../Models/StockMovement");
-
-const getStockMovements = async (req, res) => {
+const list = async (req, res, next) => {
   try {
-    const movements = await StockMovement.find()
+    const q = {};
+    for (const k of ["product", "warehouse", "type", "referenceType"])
+      if (req.query[k]) q[k] = req.query[k];
+    const d = await StockMovement.find(q)
       .populate("product", "productName sku")
       .populate("warehouse", "warehouseName")
       .populate("performedBy", "name email")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json(movements);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
+      .sort({ createdAt: -1 })
+      .limit(Math.min(Number(req.query.limit) || 100, 500));
+    res.json({ success: true, count: d.length, data: d });
+  } catch (e) {
+    next(e);
   }
 };
-
-const getProductMovements = async (req, res) => {
+const byProduct = async (req, res, next) => {
   try {
-    const movements = await StockMovement.find({
-      product: req.params.productId
-    })
+    const d = await StockMovement.find({ product: req.params.productId })
       .populate("warehouse", "warehouseName")
+      .populate("performedBy", "name")
       .sort({ createdAt: -1 });
-
-    res.status(200).json(movements);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
+    res.json({ success: true, count: d.length, data: d });
+  } catch (e) {
+    next(e);
   }
 };
-
-module.exports = {
-  getStockMovements,
-  getProductMovements
-};
+module.exports = { list, byProduct };

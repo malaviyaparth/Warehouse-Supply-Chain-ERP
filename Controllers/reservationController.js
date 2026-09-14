@@ -1,176 +1,114 @@
 const mongoose = require("mongoose");
 
-const SalesOrder =
-    require("../Models/SalesOrder");
+const SalesOrder = require("../Models/SalesOrder");
 
-const Inventory =
-    require("../Models/Inventory");
+const Inventory = require("../Models/Inventory");
 
+const reserveStock = async (req, res) => {
+  const session = await mongoose.startSession();
 
-const reserveStock =
-    async (req, res) => {
+  try {
+    session.startTransaction();
 
-        const session =
-            await mongoose.startSession();
+    const order = await SalesOrder.findById(req.params.id).session(session);
 
+    if (!order) {
+      await session.abortTransaction();
 
-        try {
+      return res.status(404).json({
+        success: false,
+        message: "Sales order not found",
+      });
+    }
 
-            session.startTransaction();
+    if (order.status !== "PENDING") {
+      await session.abortTransaction();
 
+      return res.status(400).json({
+        success: false,
+        message: "Only pending orders can reserve stock",
+      });
+    }
 
-            const order =
-                await SalesOrder.findById(
-                    req.params.id
-                ).session(session);
+    /*
+     * STEP 1
+     * Check availability
+     */
+    for (const item of order.items) {
+      const inventory = await Inventory.findOne({
+        product: item.product,
 
+        warehouse: order.warehouse,
+      }).session(session);
 
-            if (!order) {
+      if (!inventory) {
+        await session.abortTransaction();
 
-                await session.abortTransaction();
+        return res.status(400).json({
+          success: false,
+          message: "Inventory not found",
+        });
+      }
 
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Sales order not found"
-                });
-            }
+      const availableStock = inventory.quantity - inventory.reservedStock;
 
+      if (availableStock < item.quantity) {
+        await session.abortTransaction();
 
-            if (
-                order.status !== "PENDING"
-            ) {
+        return res.status(400).json({
+          success: false,
+          message: "Insufficient available stock",
+        });
+      }
+    }
 
-                await session.abortTransaction();
+    /*
+     * STEP 2
+     * Reserve stock
+     */
+    for (const item of order.items) {
+      const inventory = await Inventory.findOne({
+        product: item.product,
 
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Only pending orders can reserve stock"
-                });
-            }
+        warehouse: order.warehouse,
+      }).session(session);
 
+      inventory.reservedStock += item.quantity;
 
-            /*
-             * STEP 1
-             * Check availability
-             */
-            for (
-                const item of order.items
-            ) {
+      await inventory.save({
+        session,
+      });
+    }
 
-                const inventory =
-                    await Inventory.findOne({
-                        product:
-                            item.product,
+    /*
+     * STEP 3
+     * Confirm order
+     */
+    order.status = "CONFIRMED";
 
-                        warehouse:
-                            order.warehouse
-                    }).session(session);
+    await order.save({
+      session,
+    });
 
+    await session.commitTransaction();
 
-                if (!inventory) {
+    res.status(200).json({
+      success: true,
+      message: "Stock reserved successfully",
+      data: order,
+    });
+  } catch (error) {
+    await session.abortTransaction();
 
-                    await session.abortTransaction();
-
-                    return res.status(400).json({
-                        success: false,
-                        message:
-                            "Inventory not found"
-                    });
-                }
-
-
-                const availableStock =
-                    inventory.quantity -
-                    inventory.reservedStock;
-
-
-                if (
-                    availableStock <
-                    item.quantity
-                ) {
-
-                    await session.abortTransaction();
-
-                    return res.status(400).json({
-                        success: false,
-                        message:
-                            "Insufficient available stock"
-                    });
-                }
-            }
-
-
-            /*
-             * STEP 2
-             * Reserve stock
-             */
-            for (
-                const item of order.items
-            ) {
-
-                const inventory =
-                    await Inventory.findOne({
-                        product:
-                            item.product,
-
-                        warehouse:
-                            order.warehouse
-                    }).session(session);
-
-
-                inventory.reservedStock +=
-                    item.quantity;
-
-
-                await inventory.save({
-                    session
-                });
-            }
-
-
-            /*
-             * STEP 3
-             * Confirm order
-             */
-            order.status =
-                "CONFIRMED";
-
-
-            await order.save({
-                session
-            });
-
-
-            await session.commitTransaction();
-
-
-            res.status(200).json({
-                success: true,
-                message:
-                    "Stock reserved successfully",
-                data: order
-            });
-
-
-        } catch (error) {
-
-            await session.abortTransaction();
-
-            res.status(500).json({
-                success: false,
-                message: error.message
-            });
-
-
-        } finally {
-
-            session.endSession();
-        }
-    };
-
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  } finally {
+    session.endSession();
+  }
+};
 
 module.exports = {
-    reserveStock
+  reserveStock,
 };

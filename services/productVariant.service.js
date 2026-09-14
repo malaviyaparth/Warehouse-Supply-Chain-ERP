@@ -51,8 +51,10 @@ const updateVariant = async (id, data = {}) => {
   validateId(id, "variant ID");
 
   const updates = {};
-  if (data.variantName !== undefined) updates.variantName = data.variantName.trim();
-  if (data.variantValue !== undefined) updates.variantValue = data.variantValue.trim();
+  if (data.variantName !== undefined)
+    updates.variantName = data.variantName.trim();
+  if (data.variantValue !== undefined)
+    updates.variantValue = data.variantValue.trim();
   if (data.sku !== undefined) updates.sku = data.sku.trim().toUpperCase();
   if (data.additionalPrice !== undefined) {
     updates.additionalPrice = Number(data.additionalPrice);

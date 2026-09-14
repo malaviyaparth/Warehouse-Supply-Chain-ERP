@@ -1,263 +1,94 @@
-const Product =
-    require("../Models/Product");
-
-const Warehouse =
-    require("../Models/Warehouse");
-
-const Vendor =
-    require("../Models/Vendor");
-
-const Purchase =
-    require("../Models/Purchase");
-
-const PurchaseRequest =
-    require("../Models/PurchaseRequest");
-
-const SalesOrder =
-    require("../Models/SalesOrder");
-
-const Inventory =
-    require("../Models/Inventory");
-
-const StockMovement =
-    require("../Models/StockMovement");
-
-
-const getDashboard =
-    async (req, res) => {
-
-        try {
-
-            const [
-                totalProducts,
-                totalWarehouses,
-                totalVendors,
-                pendingPurchases,
-                pendingPurchaseRequests,
-                pendingSalesOrders,
-                inventoryRecords
-            ] = await Promise.all([
-
-                Product.countDocuments(),
-
-                Warehouse.countDocuments(),
-
-                Vendor.countDocuments({
-                    isActive: true
-                }),
-
-                Purchase.countDocuments({
-                    status: "PENDING"
-                }),
-
-                PurchaseRequest.countDocuments({
-                    status: "PENDING"
-                }),
-
-                SalesOrder.countDocuments({
-                    status: {
-                        $in: [
-                            "PENDING",
-                            "CONFIRMED"
-                        ]
-                    }
-                }),
-
-                Inventory.find()
-                    .populate("product")
-                    .populate("warehouse")
-            ]);
-
-
-            /*
-             * LOW STOCK PRODUCTS
-             */
-            const lowStockProducts = [];
-
-
-            for (
-                const inventory
-                of inventoryRecords
-            ) {
-
-                if (!inventory.product) {
-                    continue;
-                }
-
-
-                const availableStock =
-                    inventory.quantity -
-                    inventory.reservedStock;
-
-
-                const product =
-                    inventory.product;
-
-
-                const reorderPoint =
-                    (
-                        product.averageDailyDemand *
-                        product.leadTimeDays
-                    ) +
-                    product.safetyStock;
-
-
-                if (
-                    availableStock <=
-                    reorderPoint
-                ) {
-
-                    lowStockProducts.push({
-
-                        product:
-                            product.productName,
-
-                        sku:
-                            product.sku,
-
-                        warehouse:
-                            inventory.warehouse
-                                ? inventory.warehouse
-                                    .warehouseName
-                                : null,
-
-                        availableStock,
-
-                        reorderPoint
-                    });
-                }
-            }
-
-
-            /*
-             * RECENT STOCK MOVEMENTS
-             */
-            const recentMovements =
-                await StockMovement.find()
-                    .populate("product")
-                    .populate("warehouse")
-                    .sort({
-                        createdAt: -1
-                    })
-                    .limit(10);
-
-
-            /*
-             * TOTAL SALES
-             */
-            const salesResult =
-                await SalesOrder.aggregate([
-
-                    {
-                        $match: {
-                            status: {
-                                $ne:
-                                    "CANCELLED"
-                            }
-                        }
-                    },
-
-                    {
-                        $group: {
-                            _id: null,
-
-                            totalSales: {
-                                $sum:
-                                    "$totalAmount"
-                            }
-                        }
-                    }
-                ]);
-
-
-            /*
-             * TOTAL PURCHASE
-             */
-            const purchaseResult =
-                await Purchase.aggregate([
-
-                    {
-                        $match: {
-                            status: {
-                                $ne:
-                                    "CANCELLED"
-                            }
-                        }
-                    },
-
-                    {
-                        $group: {
-                            _id: null,
-
-                            totalPurchase: {
-                                $sum:
-                                    "$totalAmount"
-                            }
-                        }
-                    }
-                ]);
-
-
-            const totalSales =
-                salesResult.length
-                    ? salesResult[0].totalSales
-                    : 0;
-
-
-            const totalPurchase =
-                purchaseResult.length
-                    ? purchaseResult[0].totalPurchase
-                    : 0;
-
-
-            res.status(200).json({
-
-                success: true,
-
-                data: {
-
-                    summary: {
-
-                        totalProducts,
-
-                        totalWarehouses,
-
-                        totalVendors,
-
-                        pendingPurchases,
-
-                        pendingPurchaseRequests,
-
-                        pendingSalesOrders,
-
-                        lowStockCount:
-                            lowStockProducts.length,
-
-                        totalSales,
-
-                        totalPurchase
-                    },
-
-
-                    lowStockProducts,
-
-
-                    recentStockMovements:
-                        recentMovements
-                }
-            });
-
-
-        } catch (error) {
-
-            res.status(500).json({
-                success: false,
-                message: error.message
-            });
-        }
-    };
-
-
-module.exports = {
-    getDashboard
+const Product = require("../Models/Product"),
+  Warehouse = require("../Models/Warehouse"),
+  Vendor = require("../Models/Vendor"),
+  PurchaseOrder = require("../Models/PurchaseOrder"),
+  PurchaseRequest = require("../Models/PurchaseRequest"),
+  SalesOrder = require("../Models/SalesOrder"),
+  Inventory = require("../Models/Inventory"),
+  StockMovement = require("../Models/StockMovement");
+const getDashboard = async (req, res, next) => {
+  try {
+    const [
+      totalProducts,
+      totalWarehouses,
+      totalVendors,
+      pendingPurchases,
+      pendingPurchaseRequests,
+      pendingSalesOrders,
+      inventory,
+    ] = await Promise.all([
+      Product.countDocuments({ status: "ACTIVE" }),
+      Warehouse.countDocuments({ status: "ACTIVE" }),
+      Vendor.countDocuments({ status: "ACTIVE" }),
+      PurchaseOrder.countDocuments({
+        status: { $in: ["PENDING", "APPROVED", "PARTIALLY_RECEIVED"] },
+      }),
+      PurchaseRequest.countDocuments({ status: "PENDING" }),
+      SalesOrder.countDocuments({
+        status: { $in: ["PENDING", "CONFIRMED", "PROCESSING"] },
+      }),
+      Inventory.find()
+        .populate(
+          "product",
+          "productName sku averageDailyDemand leadTimeDays safetyStock",
+        )
+        .populate("warehouse", "warehouseName"),
+    ]);
+    const low = inventory
+      .filter(
+        (i) =>
+          i.product &&
+          i.quantity - i.reservedStock <=
+            (i.product.averageDailyDemand || 0) *
+              (i.product.leadTimeDays || 0) +
+              (i.product.safetyStock || 0),
+      )
+      .map((i) => ({
+        product: i.product.productName,
+        sku: i.product.sku,
+        warehouse: i.warehouse?.warehouseName,
+        quantity: i.quantity,
+        reservedStock: i.reservedStock,
+        availableStock: i.quantity - i.reservedStock,
+        reorderPoint:
+          (i.product.averageDailyDemand || 0) * (i.product.leadTimeDays || 0) +
+          (i.product.safetyStock || 0),
+      }));
+    const [sales, purchase] = await Promise.all([
+      SalesOrder.aggregate([
+        { $match: { status: { $ne: "CANCELLED" } } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+      ]),
+      PurchaseOrder.aggregate([
+        { $match: { status: { $ne: "CANCELLED" } } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+      ]),
+    ]);
+    const recent = await StockMovement.find()
+      .populate("product", "productName sku")
+      .populate("warehouse", "warehouseName")
+      .sort({ createdAt: -1 })
+      .limit(10);
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalProducts,
+          totalWarehouses,
+          totalVendors,
+          pendingPurchases,
+          pendingPurchaseRequests,
+          pendingSalesOrders,
+          lowStockCount: low.length,
+          totalSales: sales[0]?.total || 0,
+          totalPurchase: purchase[0]?.total || 0,
+        },
+        lowStockProducts: low,
+        recentStockMovements: recent,
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
 };
+module.exports = { getDashboard };
