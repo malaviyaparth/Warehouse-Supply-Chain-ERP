@@ -7,22 +7,21 @@ const permissionSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      lowercase: true, // e.g. "inventory.update", "purchase.approve"
     },
-
+    module: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true, // e.g. "INVENTORY", "PURCHASE", "SALES"
+    },
     description: {
       type: String,
       trim: true,
-    },
-
-    role: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Role",
-      required: true,
+      default: "",
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Permission", permissionSchema);

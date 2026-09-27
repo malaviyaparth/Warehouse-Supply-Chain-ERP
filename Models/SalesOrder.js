@@ -42,9 +42,12 @@ const salesOrderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
+        "DRAFT",
         "PENDING",
         "CONFIRMED",
+        "RESERVED",
         "PROCESSING",
+        "FULFILLED",
         "SHIPPED",
         "DELIVERED",
         "CANCELLED",
@@ -53,7 +56,24 @@ const salesOrderSchema = new mongoose.Schema(
     },
     remarks: { type: String, trim: true },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
 );
 
+salesOrderSchema.virtual("customerId").get(function () {
+  return this.customer;
+}).set(function (val) {
+  this.customer = val;
+});
+
+salesOrderSchema.virtual("warehouseId").get(function () {
+  return this.warehouse;
+}).set(function (val) {
+  this.warehouse = val;
+});
+
 module.exports = mongoose.model("SalesOrder", salesOrderSchema);
+

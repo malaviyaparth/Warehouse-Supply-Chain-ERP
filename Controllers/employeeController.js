@@ -1,17 +1,31 @@
 const Employee = require("../Models/Employee");
+const Role = require("../Models/Role");
 const { hashPassword } = require("../services/auth");
 const create = async (req, res, next) => {
   try {
     const b = req.body;
-    if (!b.name || !b.email || !b.password || !b.department || !b.role)
+    if (!b.name || !b.email || !b.password || !b.role) {
       return res
         .status(400)
         .json({
           success: false,
-          message: "name, email, password, department and role are required",
+          message: "name, email, password, and role are required",
         });
+    }
+
+    let dept = b.department;
+    if (!dept) {
+      const r = await Role.findById(b.role);
+      const rName = r?.roleName?.toUpperCase();
+      if (rName === "PURCHASE_MANAGER") dept = "PURCHASE";
+      else if (rName === "WAREHOUSE_MANAGER") dept = "WAREHOUSE";
+      else if (rName === "SALES_MANAGER") dept = "SALES";
+      else dept = "ADMIN";
+    }
+
     const d = await Employee.create({
       ...b,
+      department: dept,
       password: await hashPassword(b.password),
     });
     const out = await Employee.findById(d._id)

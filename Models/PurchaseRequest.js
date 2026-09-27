@@ -21,17 +21,38 @@ const purchaseRequestSchema = new mongoose.Schema(
       ref: "Warehouse",
       required: true,
     },
-    requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
-    items: { type: [itemSchema], validate: (v) => v.length > 0 },
-    reason: { type: String, enum: ["LOW_STOCK", "MANUAL"], default: "MANUAL" },
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      required: true,
+    },
+    items: {
+      type: [itemSchema],
+      validate: [(v) => v && v.length > 0, "At least one item is required in a purchase request"],
+    },
+    reason: {
+      type: String,
+      trim: true,
+      default: "MANUAL",
+    },
+    priority: {
+      type: String,
+      enum: ["LOW", "MEDIUM", "HIGH", "URGENT"],
+      default: "MEDIUM",
+    },
     status: {
       type: String,
-      enum: ["PENDING", "APPROVED", "REJECTED", "CONVERTED"],
+      enum: ["PENDING", "APPROVED", "REJECTED", "CANCELLED", "CONVERTED", "CONVERTED_TO_PO"],
       default: "PENDING",
     },
     remarks: { type: String, trim: true },
   },
   { timestamps: true },
 );
+
+// Virtual aliases
+purchaseRequestSchema.virtual("warehouseId").get(function () {
+  return this.warehouse;
+});
 
 module.exports = mongoose.model("PurchaseRequest", purchaseRequestSchema);
