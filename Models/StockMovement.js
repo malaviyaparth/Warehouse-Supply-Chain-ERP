@@ -59,8 +59,35 @@ const stockMovementSchema = new mongoose.Schema(
       ref: "Employee",
       required: false,
     },
+
+    remarks: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+// Virtual aliases according to specification
+stockMovementSchema.virtual("productId").get(function () {
+  return this.product;
+});
+
+stockMovementSchema.virtual("warehouseId").get(function () {
+  return this.warehouse;
+});
+
+stockMovementSchema.virtual("movementType").get(function () {
+  return this.type;
+});
+
+stockMovementSchema.virtual("timestamp").get(function () {
+  return this.createdAt;
+});
 
 module.exports = mongoose.model("StockMovement", stockMovementSchema);

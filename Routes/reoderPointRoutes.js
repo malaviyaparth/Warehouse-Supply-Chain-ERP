@@ -1,8 +1,18 @@
 const router = require("express").Router();
 const c = require("../Controllers/reorderPointController");
-router.get("/:productId/:warehouseId", c.checkROP);
+const authorize = require("../Middleware/roleMiddleware");
+const { ROLES } = authorize;
+
+router.get(
+  "/:productId/:warehouseId",
+  authorize(ROLES.SUPER_ADMIN, ROLES.PURCHASE_MANAGER, ROLES.WAREHOUSE_MANAGER),
+  c.checkROP
+);
+
 router.post(
   "/:productId/:warehouseId/purchase-request",
-  c.generatePurchaseRequest,
+  authorize(ROLES.SUPER_ADMIN, ROLES.PURCHASE_MANAGER, ROLES.WAREHOUSE_MANAGER),
+  c.generatePurchaseRequest
 );
+
 module.exports = router;

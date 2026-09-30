@@ -1,31 +1,35 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const warehouseSchema = new mongoose.Schema(
   {
-    name: {
+    warehouseName: {
       type: String,
       required: true,
+      unique: true,
       trim: true,
     },
+
     location: {
       type: String,
       required: true,
       trim: true,
     },
+
     capacity: {
       type: Number,
       required: true,
       min: 0,
     },
+
     status: {
       type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
+      enum: ["ACTIVE", "INACTIVE"],
+      default: "ACTIVE",
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-module.exports = mongoose.model('WareHouse', warehouseSchema);
+module.exports = mongoose.models.Warehouse || mongoose.model("Warehouse", warehouseSchema);

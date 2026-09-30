@@ -24,12 +24,17 @@ app.get("/health", (req, res) =>
   }),
 );
 
+// Public auth routes
 app.use("/api/auth", require("./Routes/authRoutes"));
+
+// Mount authenticated ERP routes
 app.use("/api", authenticate);
+
 
 const routes = {
   "/api/employees": require("./Routes/employeeRoutes"),
   "/api/roles": require("./Routes/roleRoutes"),
+  "/api/permissions": require("./Routes/permissionRoutes"),
   "/api/categories": require("./Routes/categoryRoutes"),
   "/api/brands": require("./Routes/brandRoutes"),
   "/api/products": require("./Routes/productRoutes"),
@@ -40,6 +45,8 @@ const routes = {
   "/api/vendors": require("./Routes/vendorRoutes"),
   "/api/customers": require("./Routes/customerRoutes"),
   "/api/purchases": require("./Routes/purchaseRoutes"),
+  "/api/purchase": require("./Routes/purchaseRoutes"),
+  "/api/purchase-orders": require("./Routes/purchaseRoutes"),
   "/api/purchase-requests": require("./Routes/purchaseRequestRoutes"),
   "/api/reorder-point": require("./Routes/reoderPointRoutes"),
   "/api/sales-orders": require("./Routes/salesOrderRoutes"),
@@ -47,6 +54,13 @@ const routes = {
   "/api/invoices": require("./Routes/invoiceRoutes"),
   "/api/reports": require("./Routes/reportRoutes"),
   "/api/dashboard": require("./Routes/dashboardRoutes"),
+  "/api/reservations": require("./Routes/reservationRoutes"),
+  "/api/deliveries": require("./Routes/deliveryRoutes"),
+  "/api/returns": require("./Routes/returnRoutes"),
+  "/api/audit-logs": require("./Routes/auditLogRoutes"),
+  "/api/settings": require("./Routes/companySettingsRoutes"),
+  "/api/company-settings": require("./Routes/companySettingsRoutes"),
+  "/api/goods-receipts": require("./Routes/goodsReceiptRoutes"),
 };
 Object.entries(routes).forEach(([path, router]) => app.use(path, router));
 
@@ -55,10 +69,13 @@ app.use((req, res) =>
 );
 app.use(errorHandler);
 
+const { initScheduledJobs } = require("./jobs/inventoryJobs");
+
 const PORT = Number(process.env.PORT) || 3000;
 const start = async () => {
   try {
     await connectDB();
+    initScheduledJobs();
     app.listen(PORT, () =>
       console.log(`API running on http://localhost:${PORT}`),
     );

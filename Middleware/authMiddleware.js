@@ -1,18 +1,46 @@
-const jwt = require("jsonwebtoken");
+const { verifyAccessToken } = require("../services/authService");
+const Employee = require("../Models/Employee");
+const { normalizeRole } = require("./roleMiddleware");
 
-const authenticate = (req, res, next) => {
+const authenticate = async (req, res, next) => {
   try {
-    const header = req.headers.authorization;
-    if (!header || !header.startsWith("Bearer "))
-      return res
-        .status(401)
-        .json({ success: false, message: "Access token required" });
-    req.user = jwt.verify(header.slice(7), process.env.JWT_SECRET);
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required. Bearer token missing.",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    let decoded;
+    try {
+      decoded = verifyAccessToken(token);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: "Access token is invalid or expired.",
+        code: "TOKEN_EXPIRED",
+      });
+    }
+
+    // Verify employee exists and is active
+    const employee = await Employee.findById(decoded.id).select("status");
+    if (!employee || employee.status !== "ACTIVE") {
+      return res.status(403).json({
+        success: false,
+        message: "User account is suspended, inactive, or no longer exists.",
+      });
+    }
+
+    req.user = {
+      ...decoded,
+      roleName: normalizeRole(decoded.roleName),
+      originalRoleName: decoded.roleName,
+    };
     next();
-  } catch {
-    res
-      .status(401)
-      .json({ success: false, message: "Invalid or expired token" });
+  } catch (error) {
+    next(error);
   }
 };
 
