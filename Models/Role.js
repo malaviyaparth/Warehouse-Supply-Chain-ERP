@@ -14,12 +14,14 @@ const roleSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+
     permissions: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Permission",
+        ref : "Permission",
       },
     ],
+
     status: {
       type: String,
       enum: ["ACTIVE", "INACTIVE"],
